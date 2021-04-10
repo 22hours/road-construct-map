@@ -1,0 +1,13 @@
+#map {
+    width: "100%";
+    height: 100vh;
+}
+.control_pannel {
+    z-index: 1000;
+    width: 100;
+    position: absolute;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 50;
+}
