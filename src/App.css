@@ -11,3 +11,18 @@
     left: 0;
     height: 50;
 }
+
+.custom {
+    background: black;
+}
+
+.article_marker {
+    background-image: url("./img/sample_marker1.png");
+    width: 100px;
+    height: 90px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    color: white;
+}
+.shd {
+}

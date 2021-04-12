@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 
 import "./App.css";
+import marker_img from "./img/pin_default.png";
 declare global {
     interface Window {
         naver: any;
@@ -12,6 +13,13 @@ const dummy_marker_datas = [
     [37.3699814, 127.105399],
     [37.3690926, 127.105399],
 ];
+
+const dummy_detail_markers = [
+    [37.3695704, 127.105399],
+    [37.3999814, 127.105399],
+    [37.3790926, 127.105399],
+];
+
 const ControlPanel = ({ map }: { map: any }) => {
     const [markers, setMarkers] = useState<Array<any>>([]);
     const [infoWindows, setInfoWindows] = useState<Array<any>>([]);
@@ -22,11 +30,14 @@ const ControlPanel = ({ map }: { map: any }) => {
     type Action =
         | { type: "SET_MAP_TYPE"; value: ValueType["mapType"] }
         | { type: "LOAD_MARKERS" }
+        | { type: "LOAD_DETAIL_MARKERS" }
         | { type: "REMOVE_ALL_MARKERS" }
         | { type: "UPDATE_MARKER_RENDER" }
         | { type: "HIDE_MARKER"; marker: any }
         | { type: "SHOW_MARKER"; marker: any };
-
+    const alertshow = () => {
+        alert("HO!");
+    };
     const dispatch = (action: Action) => {
         switch (action.type) {
             case "SET_MAP_TYPE": {
@@ -47,8 +58,9 @@ const ControlPanel = ({ map }: { map: any }) => {
                         position: position,
                         animation: window.naver.maps.Animation.DROP,
                     });
+
                     var contentString = [
-                        '<div class="iw_inner">',
+                        '<div class="custom">',
                         "   <h3>서울특별시청</h3>",
                         "   <p>서울특별시 중구 태평로1가 31 | 서울특별시 중구 세종대로 110 서울특별시청<br />",
                         "       02-120 | 공공,사회기관 &gt; 특별,광역시청<br />",
@@ -74,6 +86,69 @@ const ControlPanel = ({ map }: { map: any }) => {
                 });
                 setMarkers(cur_markers);
                 setInfoWindows(cur_infoWindows);
+                break;
+            }
+            case "LOAD_DETAIL_MARKERS": {
+                console.log("DETAIL MARKER LOAD!");
+                // MARKER RENDER
+                dummy_detail_markers.forEach((element) => {
+                    var position = new window.naver.maps.LatLng(element[0], element[1]);
+                    var markerOptions = {
+                        position: position,
+                        map: map,
+                        icon: {
+                            url: marker_img,
+                            size: new window.naver.maps.Size(22, 35),
+                            origin: new window.naver.maps.Point(0, 0),
+                            anchor: new window.naver.maps.Point(11, 35),
+                        },
+                    };
+
+                    var markerOptions2 = {
+                        position: position,
+                        map: map,
+                        title: "Green",
+                        icon: {
+                            content: [
+                                '<div class="article_marker">',
+                                '<div class="map_group _map_group crs">',
+                                '<div class="map_marker _marker num1 num1_big"> ',
+                                '<span class="ico _icon"></span>',
+                                '<span class="shd">1</span>',
+                                "</div>",
+                                "</div>",
+                                "</div>",
+                            ].join(""),
+                            size: new window.naver.maps.Size(38, 58),
+                            anchor: new window.naver.maps.Point(19, 58),
+                        },
+                    };
+
+                    var marker = new window.naver.maps.Marker(markerOptions2);
+                    console.log(marker);
+                    var contentString = [
+                        '<div class="iw_inner">',
+                        "   <h3>디테일 마커입니다!</h3>",
+                        "   <p>서울특별시 중구 태평로1가 31 | 서울특별시 중구 세종대로 110 서울특별시청<br />",
+                        "       02-120 | 공공,사회기관 &gt; 특별,광역시청<br />",
+                        '       <a href="http://www.seoul.go.kr" target="_blank">www.seoul.go.kr/</a>',
+                        "   </p>",
+                        "</div>",
+                    ].join("");
+
+                    var infowindow = new window.naver.maps.InfoWindow({
+                        content: contentString,
+                        maxWidth: 140,
+                    });
+
+                    window.naver.maps.Event.addListener(marker, "click", function (e: any) {
+                        if (infowindow.getMap()) {
+                            infowindow.close();
+                        } else {
+                            infowindow.open(map, marker);
+                        }
+                    });
+                });
                 break;
             }
             case "REMOVE_ALL_MARKERS": {
@@ -141,6 +216,7 @@ const ControlPanel = ({ map }: { map: any }) => {
             <button onClick={() => dispatch({ type: "SET_MAP_TYPE", value: "satellite" })}>위성</button>
             <button onClick={() => dispatch({ type: "SET_MAP_TYPE", value: "terrain" })}>지적도</button>
             <button onClick={() => dispatch({ type: "LOAD_MARKERS" })}>마커 로드하기</button>
+            <button onClick={() => dispatch({ type: "LOAD_DETAIL_MARKERS" })}>디테일 마커 로드하기</button>
             <button onClick={() => dispatch({ type: "REMOVE_ALL_MARKERS" })}>마커 삭제하기</button>
         </div>
     );
