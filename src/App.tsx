@@ -6,12 +6,44 @@ declare global {
     interface Window {
         naver: any;
         N: any;
+        ReactNativeWebView: any;
     }
 }
-const dummy_marker_datas = [
-    [37.3595704, 127.105399],
-    [37.3699814, 127.105399],
-    [37.3690926, 127.105399],
+
+////////////////////////////////////////////////////////////////////////////////////
+// FIRST MARKERS
+type FirstMarkerItem = {
+    id: number | string;
+    title: string;
+    step: string;
+    coordinates: {
+        latitude: number; // 위도 33 ~
+        longitude: number; // 경도 127 ~
+    };
+};
+type FirstMarkers = Array<FirstMarkerItem>;
+const first_markers: FirstMarkers = [
+    { id: 1, title: "도로개설", step: "의견청취", coordinates: { latitude: 37.3595704, longitude: 127.105399 } },
+    { id: 2, title: "도로개설", step: "의견청취", coordinates: { latitude: 37.3699814, longitude: 127.106399 } },
+    { id: 3, title: "도로개설", step: "완료", coordinates: { latitude: 37.3690926, longitude: 127.105399 } },
+];
+
+//////////////////////////////////////////////////////////////////////
+// SECOND MARKERS
+type SecondMarkerItem = {
+    id: number | string;
+    lable: string;
+    coordinates: {
+        latitude: number; // 위도 33 ~
+        longitude: number; // 경도 127 ~
+    };
+};
+
+type SecondMarkers = Array<SecondMarkerItem>;
+const second_markers: SecondMarkers = [
+    { id: 1, lable: "시점", coordinates: { latitude: 37.3595704, longitude: 127.105399 } },
+    { id: 2, lable: "시점", coordinates: { latitude: 37.3699814, longitude: 127.105399 } },
+    { id: 3, lable: "종점", coordinates: { latitude: 37.3690926, longitude: 127.105399 } },
 ];
 
 const dummy_detail_markers = [
@@ -20,9 +52,31 @@ const dummy_detail_markers = [
     [37.3790926, 127.105399],
 ];
 
+const ZoomController = ({ map }: { map: any }) => {
+    const [zoom, setZoom] = useState<number>(14);
+    useEffect(() => {
+        var event = window.naver.maps.Event.addListener(map, "idle", function (e: any) {
+            var cur_zoom: number = map.zoom;
+            setZoom(cur_zoom);
+        });
+        return () => {
+            window.naver.maps.Event.removeListener(event);
+        };
+    }, [map]);
+    return (
+        <>
+            {zoom < 14 && (
+                <div className="zoom_alert">
+                    <span>지도를 더 확대해 주세요</span>
+                </div>
+            )}
+        </>
+    );
+};
+
 const ControlPanel = ({ map }: { map: any }) => {
     const [markers, setMarkers] = useState<Array<any>>([]);
-    const [infoWindows, setInfoWindows] = useState<Array<any>>([]);
+    const [cadastralLayer, setCadastralLayer] = useState<any>(new window.naver.maps.CadastralLayer());
 
     type ValueType = {
         mapType: "normal" | "satellite" | "terrain";
@@ -34,58 +88,54 @@ const ControlPanel = ({ map }: { map: any }) => {
         | { type: "REMOVE_ALL_MARKERS" }
         | { type: "UPDATE_MARKER_RENDER" }
         | { type: "HIDE_MARKER"; marker: any }
-        | { type: "SHOW_MARKER"; marker: any };
-    const alertshow = () => {
-        alert("HO!");
-    };
+        | { type: "SHOW_MARKER"; marker: any }
+        | { type: "TOGGLE_CADASTRAL" };
+
     const dispatch = (action: Action) => {
         switch (action.type) {
             case "SET_MAP_TYPE": {
                 var newMapType = action.value;
-                console.log(window.naver.maps.MapTypeId);
                 map.setMapTypeId(newMapType);
                 break;
             }
             case "LOAD_MARKERS": {
                 var cur_markers: Array<any> = [];
-                var cur_infoWindows: Array<any> = [];
 
                 // MARKER RENDER
-                dummy_marker_datas.forEach((element) => {
-                    var position = new window.naver.maps.LatLng(element[0], element[1]);
-                    var marker = new window.naver.maps.Marker({
-                        map: map,
+                first_markers.forEach((element) => {
+                    var coordinates = element.coordinates;
+
+                    var position = new window.naver.maps.LatLng(coordinates.latitude, coordinates.longitude);
+                    var markerOptions = {
                         position: position,
-                        animation: window.naver.maps.Animation.DROP,
-                    });
-
-                    var contentString = [
-                        '<div class="custom">',
-                        "   <h3>서울특별시청</h3>",
-                        "   <p>서울특별시 중구 태평로1가 31 | 서울특별시 중구 세종대로 110 서울특별시청<br />",
-                        "       02-120 | 공공,사회기관 &gt; 특별,광역시청<br />",
-                        '       <a href="http://www.seoul.go.kr" target="_blank">www.seoul.go.kr/</a>',
-                        "   </p>",
-                        "</div>",
-                    ].join("");
-
-                    var infowindow = new window.naver.maps.InfoWindow({
-                        content: contentString,
-                    });
+                        map: map,
+                        title: "Green",
+                        icon: {
+                            content: [
+                                '<div class="article_marker">',
+                                '<div class="marker_container">',
+                                `<div class="marker_title">${element.title}</div>`,
+                                `<div class="marker_step">${element.step}</div>`,
+                                "</div>",
+                                "</div>",
+                            ].join(""),
+                            size: new window.naver.maps.Size(38, 58),
+                            anchor: new window.naver.maps.Point(19, 58),
+                        },
+                    };
+                    var marker = new window.naver.maps.Marker(markerOptions);
 
                     window.naver.maps.Event.addListener(marker, "click", function (e: any) {
-                        if (infowindow.getMap()) {
-                            infowindow.close();
-                        } else {
-                            infowindow.open(map, marker);
+                        if (window.ReactNativeWebView) {
+                            window.ReactNativeWebView.postMessage(
+                                JSON.stringify({ type: "CLICK_ARTICLE_MARKER", value: element })
+                            );
                         }
                     });
 
                     cur_markers.push(marker);
-                    cur_infoWindows.push(infowindow);
                 });
                 setMarkers(cur_markers);
-                setInfoWindows(cur_infoWindows);
                 break;
             }
             case "LOAD_DETAIL_MARKERS": {
@@ -94,17 +144,6 @@ const ControlPanel = ({ map }: { map: any }) => {
                 dummy_detail_markers.forEach((element) => {
                     var position = new window.naver.maps.LatLng(element[0], element[1]);
                     var markerOptions = {
-                        position: position,
-                        map: map,
-                        icon: {
-                            url: marker_img,
-                            size: new window.naver.maps.Size(22, 35),
-                            origin: new window.naver.maps.Point(0, 0),
-                            anchor: new window.naver.maps.Point(11, 35),
-                        },
-                    };
-
-                    var markerOptions2 = {
                         position: position,
                         map: map,
                         title: "Green",
@@ -123,38 +162,13 @@ const ControlPanel = ({ map }: { map: any }) => {
                             anchor: new window.naver.maps.Point(19, 58),
                         },
                     };
+                    var marker = new window.naver.maps.Marker(markerOptions);
 
-                    var marker = new window.naver.maps.Marker(markerOptions2);
-                    console.log(marker);
-                    var contentString = [
-                        '<div class="iw_inner">',
-                        "   <h3>디테일 마커입니다!</h3>",
-                        "   <p>서울특별시 중구 태평로1가 31 | 서울특별시 중구 세종대로 110 서울특별시청<br />",
-                        "       02-120 | 공공,사회기관 &gt; 특별,광역시청<br />",
-                        '       <a href="http://www.seoul.go.kr" target="_blank">www.seoul.go.kr/</a>',
-                        "   </p>",
-                        "</div>",
-                    ].join("");
-
-                    var infowindow = new window.naver.maps.InfoWindow({
-                        content: contentString,
-                        maxWidth: 140,
-                    });
-
-                    window.naver.maps.Event.addListener(marker, "click", function (e: any) {
-                        if (infowindow.getMap()) {
-                            infowindow.close();
-                        } else {
-                            infowindow.open(map, marker);
-                        }
-                    });
+                    window.naver.maps.Event.addListener(marker, "click", function (e: any) {});
                 });
                 break;
             }
             case "REMOVE_ALL_MARKERS": {
-                infoWindows.forEach((element) => {
-                    element.close();
-                });
                 markers.forEach((element) => {
                     element.setMap(null);
                 });
@@ -169,8 +183,6 @@ const ControlPanel = ({ map }: { map: any }) => {
                 break;
             }
             case "UPDATE_MARKER_RENDER": {
-                console.log("UPDATE MARKERS");
-                console.log(markers);
                 var mapBounds = map.getBounds();
                 var position;
                 markers.forEach((cur_marker) => {
@@ -185,6 +197,14 @@ const ControlPanel = ({ map }: { map: any }) => {
                         }
                     }
                 });
+                break;
+            }
+            case "TOGGLE_CADASTRAL": {
+                if (cadastralLayer.getMap()) {
+                    cadastralLayer.setMap(null);
+                } else {
+                    cadastralLayer.setMap(map);
+                }
                 break;
             }
             default:
@@ -210,14 +230,36 @@ const ControlPanel = ({ map }: { map: any }) => {
         };
     }, [markers]);
 
+    // BUSINESS LOGIC
+    useEffect(() => {
+        var dispatchWebviewPostMessage = (event: any) => {
+            var dataObj = JSON.parse(event.data);
+            dispatch({ type: dataObj.type, value: dataObj.value });
+        };
+        window.addEventListener("message", dispatchWebviewPostMessage, false);
+        document.addEventListener("message", dispatchWebviewPostMessage, false);
+        return () => {
+            window.removeEventListener("message", dispatchWebviewPostMessage);
+            document.removeEventListener("message", dispatchWebviewPostMessage);
+        };
+    }, []);
+
     return (
         <div className="control_pannel">
-            <button onClick={() => dispatch({ type: "SET_MAP_TYPE", value: "normal" })}>기본</button>
-            <button onClick={() => dispatch({ type: "SET_MAP_TYPE", value: "satellite" })}>위성</button>
-            <button onClick={() => dispatch({ type: "SET_MAP_TYPE", value: "terrain" })}>지적도</button>
             <button onClick={() => dispatch({ type: "LOAD_MARKERS" })}>마커 로드하기</button>
-            <button onClick={() => dispatch({ type: "LOAD_DETAIL_MARKERS" })}>디테일 마커 로드하기</button>
-            <button onClick={() => dispatch({ type: "REMOVE_ALL_MARKERS" })}>마커 삭제하기</button>
+
+            {window.ReactNativeWebView === undefined && (
+                <>
+                    <div>개발자모드 이용 중</div>
+                    <button onClick={() => dispatch({ type: "SET_MAP_TYPE", value: "normal" })}>기본</button>
+                    <button onClick={() => dispatch({ type: "SET_MAP_TYPE", value: "satellite" })}>위성</button>
+                    <button onClick={() => dispatch({ type: "SET_MAP_TYPE", value: "terrain" })}>지적도</button>
+                    <button onClick={() => dispatch({ type: "LOAD_MARKERS" })}>마커 로드하기</button>
+                    <button onClick={() => dispatch({ type: "LOAD_DETAIL_MARKERS" })}>디테일 마커 로드하기</button>
+                    <button onClick={() => dispatch({ type: "REMOVE_ALL_MARKERS" })}>마커 삭제하기</button>
+                    <button onClick={() => dispatch({ type: "TOGGLE_CADASTRAL" })}>지적 편집도 켜기</button>
+                </>
+            )}
         </div>
     );
 };
@@ -260,7 +302,12 @@ const App = () => {
 
     return (
         <>
-            {map && <ControlPanel map={map} />}
+            {map && (
+                <>
+                    <ControlPanel map={map} />
+                    <ZoomController map={map} />
+                </>
+            )}
             <div id="map"></div>
         </>
     );
