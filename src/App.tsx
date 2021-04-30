@@ -13,19 +13,17 @@ declare global {
 ////////////////////////////////////////////////////////////////////////////////////
 // FIRST MARKERS
 type FirstMarkerItem = {
-    id: number | string;
-    title: string;
-    step: string;
-    coordinates: {
-        latitude: number; // 위도 33 ~
-        longitude: number; // 경도 127 ~
-    };
+    article_id: number | string;
+    shorten_address: string;
+    latitude: number; // 위도 33 ~
+    longitude: number; // 경도 127 ~
 };
+
 type FirstMarkers = Array<FirstMarkerItem>;
 const first_markers: FirstMarkers = [
-    { id: 1, title: "도로개설", step: "의견청취", coordinates: { latitude: 37.3595704, longitude: 127.105399 } },
-    { id: 2, title: "도로개설", step: "의견청취", coordinates: { latitude: 37.3699814, longitude: 127.106399 } },
-    { id: 3, title: "도로개설", step: "완료", coordinates: { latitude: 37.3690926, longitude: 127.105399 } },
+    { article_id: 1, shorten_address: "도로개설", latitude: 37.3595704, longitude: 127.105399 },
+    { article_id: 2, shorten_address: "도로개설", latitude: 37.3699814, longitude: 127.106399 },
+    { article_id: 3, shorten_address: "도로개설", latitude: 37.3690926, longitude: 127.105399 },
 ];
 
 //////////////////////////////////////////////////////////////////////
@@ -83,7 +81,7 @@ const ControlPanel = ({ map }: { map: any }) => {
     };
     type Action =
         | { type: "SET_MAP_TYPE"; value: ValueType["mapType"] }
-        | { type: "LOAD_MARKERS" }
+        | { type: "LOAD_MARKERS"; value: Array<FirstMarkerItem> }
         | { type: "LOAD_DETAIL_MARKERS" }
         | { type: "REMOVE_ALL_MARKERS" }
         | { type: "UPDATE_MARKER_RENDER" }
@@ -102,8 +100,11 @@ const ControlPanel = ({ map }: { map: any }) => {
                 var cur_markers: Array<any> = [];
 
                 // MARKER RENDER
-                first_markers.forEach((element) => {
-                    var coordinates = element.coordinates;
+                action.value.forEach((element) => {
+                    var coordinates: { latitude: number; longitude: number } = {
+                        latitude: element.latitude,
+                        longitude: element.longitude,
+                    };
 
                     var position = new window.naver.maps.LatLng(coordinates.latitude, coordinates.longitude);
                     var markerOptions = {
@@ -114,8 +115,8 @@ const ControlPanel = ({ map }: { map: any }) => {
                             content: [
                                 '<div class="article_marker">',
                                 '<div class="marker_container">',
-                                `<div class="marker_title">${element.title}</div>`,
-                                `<div class="marker_step">${element.step}</div>`,
+                                `<div class="marker_title">${element.shorten_address}</div>`,
+                                // `<div class="marker_step">${element.step}</div>`,
                                 "</div>",
                                 "</div>",
                             ].join(""),
@@ -246,15 +247,13 @@ const ControlPanel = ({ map }: { map: any }) => {
 
     return (
         <div className="control_pannel">
-            <button onClick={() => dispatch({ type: "LOAD_MARKERS" })}>마커 로드하기</button>
-
             {window.ReactNativeWebView === undefined && (
                 <>
                     <div>개발자모드 이용 중</div>
                     <button onClick={() => dispatch({ type: "SET_MAP_TYPE", value: "normal" })}>기본</button>
                     <button onClick={() => dispatch({ type: "SET_MAP_TYPE", value: "satellite" })}>위성</button>
                     <button onClick={() => dispatch({ type: "SET_MAP_TYPE", value: "terrain" })}>지적도</button>
-                    <button onClick={() => dispatch({ type: "LOAD_MARKERS" })}>마커 로드하기</button>
+                    {/* <button onClick={() => dispatch({ type: "LOAD_MARKERS" })}>마커 로드하기</button> */}
                     <button onClick={() => dispatch({ type: "LOAD_DETAIL_MARKERS" })}>디테일 마커 로드하기</button>
                     <button onClick={() => dispatch({ type: "REMOVE_ALL_MARKERS" })}>마커 삭제하기</button>
                     <button onClick={() => dispatch({ type: "TOGGLE_CADASTRAL" })}>지적 편집도 켜기</button>
