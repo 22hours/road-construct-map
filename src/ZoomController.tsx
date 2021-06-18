@@ -12,7 +12,7 @@ const ZoomController = ({ map }: { map: any }) => {
     }, [map]);
     return (
         <>
-            {zoom < 12 && (
+            {zoom < 11 && (
                 <div className="zoom_alert">
                     <span>지도를 더 확대해 주세요</span>
                 </div>
