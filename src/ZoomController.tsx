@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 const ZoomController = ({ map }: { map: any }) => {
-    const [zoom, setZoom] = useState<number>(14);
+    const [zoom, setZoom] = useState<number>(12);
     useEffect(() => {
         var event = window.naver.maps.Event.addListener(map, "idle", function (e: any) {
             var cur_zoom: number = map.zoom;
@@ -12,7 +12,7 @@ const ZoomController = ({ map }: { map: any }) => {
     }, [map]);
     return (
         <>
-            {zoom < 14 && (
+            {zoom < 12 && (
                 <div className="zoom_alert">
                     <span>지도를 더 확대해 주세요</span>
                 </div>

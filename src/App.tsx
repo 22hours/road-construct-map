@@ -39,7 +39,7 @@ const App = () => {
         document[parent].appendChild(element);
     };
     const initMap = () => {
-        var clientId = "rendh30mcy";
+        var clientId = "o62y701lfc";
         var url = "https://openapi.map.naver.com/openapi/v3/maps.js?clientId=" + clientId;
         load(url, function () {
             var MYNAVERMAP = new navermaps.Map("map", {

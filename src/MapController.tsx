@@ -163,7 +163,7 @@ const MapController = ({ map, cadastralLayer }: { map: any; cadastralLayer: any 
             var event = window.naver.maps.Event.addListener(map, "idle", function (e: any) {
                 var cur_zoom: number = map.zoom;
                 console.log("ZOOM", map.zoom);
-                if (cur_zoom >= 14) {
+                if (cur_zoom >= 11) {
                     dispatch({ type: "UPDATE_MARKER_RENDER" });
                 } else {
                     dispatch({ type: "REMOVE_ALL_MARKERS" });
