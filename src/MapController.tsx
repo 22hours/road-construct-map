@@ -6,14 +6,10 @@ type FirstMarkerItem = {
     shorten_address: string;
     latitude: number; // 위도 33 ~
     longitude: number; // 경도 127 ~
+    label: string;
 };
 
 type FirstMarkers = Array<FirstMarkerItem>;
-const first_markers: FirstMarkers = [
-    { article_id: 1, shorten_address: "도로개설", latitude: 37.3595704, longitude: 127.105399 },
-    { article_id: 2, shorten_address: "도로개설", latitude: 37.3699814, longitude: 127.106399 },
-    { article_id: 3, shorten_address: "도로개설", latitude: 37.3690926, longitude: 127.105399 },
-];
 
 const MapController = ({ map, cadastralLayer }: { map: any; cadastralLayer: any }) => {
     const [markers, setMarkers] = useState<Array<any>>([]);
@@ -29,7 +25,7 @@ const MapController = ({ map, cadastralLayer }: { map: any; cadastralLayer: any 
         | { type: "HIDE_MARKER"; marker: any }
         | { type: "SHOW_MARKER"; marker: any }
         | { type: "TOGGLE_CADASTRAL" }
-        | { type: "MOVE_CURRENT_LOCATION" };
+        | { type: "MOVE_CURRENT_LOCATION"; data: { longitude: string; latitude: string } };
 
     const dispatch = (action: Action) => {
         switch (action.type) {
@@ -55,8 +51,8 @@ const MapController = ({ map, cadastralLayer }: { map: any; cadastralLayer: any 
                             content: [
                                 '<div class="article_marker">',
                                 '<div class="marker_container">',
+                                `<div class="marker_label">${element.label}</div>`,
                                 `<div class="marker_title">${element.shorten_address}</div>`,
-                                // `<div class="marker_step">${element.step}</div>`,
                                 "</div>",
                                 "</div>",
                             ].join(""),
@@ -113,22 +109,9 @@ const MapController = ({ map, cadastralLayer }: { map: any; cadastralLayer: any 
                 break;
             }
             case "MOVE_CURRENT_LOCATION": {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            //SUCCESS
-                            var location = new window.naver.maps.LatLng(
-                                position.coords.latitude,
-                                position.coords.longitude
-                            );
-                            map.setCenter(location);
-                        },
-                        () => {
-                            //ERROR
-                            sendPostMessageToApp({ type: "GEOLOCATION_ERROR" });
-                        }
-                    );
-                }
+                const { longitude, latitude } = action.data;
+                var location = new window.naver.maps.LatLng(latitude, longitude);
+                map.setCenter(location);
                 break;
             }
             default:
@@ -153,7 +136,7 @@ const MapController = ({ map, cadastralLayer }: { map: any; cadastralLayer: any 
 
     useEffect(() => {
         if (map) {
-            dispatch({ type: "MOVE_CURRENT_LOCATION" });
+            // dispatch({ type: "MOVE_CURRENT_LOCATION" });
         }
     }, [map]);
 
